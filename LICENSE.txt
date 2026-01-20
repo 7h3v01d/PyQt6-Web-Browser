@@ -1,94 +1,130 @@
-Keystone Evaluation & Testing License (KETL) v1.0
+PyQt6-Web-Browser <V1.0>
+PRIVATE EVALUATION & TESTING LICENSE (PETL) v1.0
+CANONICAL TEXT
 
-Copyright © 2026 Leon Priest
+Copyright © 2026
 All rights reserved.
 
-This Software is provided solely for private technical evaluation and testing.
-No research, academic, institutional, or production use is permitted.
+----------------------------------------------------------------------
+IMPORTANT — READ CAREFULLY
+----------------------------------------------------------------------
 
-1. Ownership
+This software is NOT open-source.
 
-All right, title, and interest in and to this Software, including all source code,
-documentation, designs, architectures, algorithms, models, and derivatives, are
-the exclusive property of Leon Priest (“Licensor”).
+This software is made available solely for private technical evaluation
+and testing purposes, including code review, architectural assessment,
+and non-production experimentation by the individual recipient.
 
-No ownership rights are transferred under this License.
+Accessing, cloning, viewing, or using this software constitutes
+acceptance of the terms of this license.
 
-2. Grant of Limited Rights
+----------------------------------------------------------------------
+PERMITTED USE
+----------------------------------------------------------------------
 
-Licensor grants you a limited, non-exclusive, non-transferable, non-sublicensable,
-revocable right to:
+You are permitted to:
 
-- View the source code
-- Run the Software locally
-- Perform functional testing and evaluation
-- Inspect architecture and behaviour
-- Conduct security and performance testing for evaluation purposes only
+• View the source code
+• Run the software locally for private evaluation and testing
+• Inspect architecture, structure, and implementation techniques
+• Perform non-production experiments solely for personal assessment
+• Report bugs or provide feedback to the author
+• Submit suggested changes or pull requests for review
 
-3. Prohibited Uses
+All permitted use must be:
 
-You may not, directly or indirectly:
+• Non-commercial
+• Non-production
+• Non-academic
+• Non-institutional
+• Non-governmental
+• Non-research-oriented
 
-a) Use the Software for research of any kind (academic, industrial, or institutional)
-b) Use the Software within or on behalf of any university, research body, government
-   agency, defence organisation, or publicly funded institution, including but not
-   limited to CSIRO, DSTG, or their contractors, without a separate written license
-c) Use the Software to develop, train, improve, benchmark, or validate any other AI
-   or software system
-d) Integrate the Software into any product, service, SDK, API, workflow, or pipeline
-e) Deploy the Software in production or operational environments
-f) Offer the Software as SaaS, PaaS, API, or hosted service
-g) Distribute, publish, sublicense, sell, rent, lease, or transfer the Software
-h) Create or distribute derivative works or independent forks
-i) Extract datasets, prompts, internal representations, or learned behaviour
-j) Train machine learning models on the Software or its outputs
-k) Publish papers, benchmarks, evaluations, or comparative studies based on the Software
-l) Use the Software for grant-funded, defence-funded, or institution-funded work
-m) Circumvent these restrictions via “non-commercial”, “fair use”, or “research” exceptions
+----------------------------------------------------------------------
+PROHIBITED USE
+----------------------------------------------------------------------
 
-4. No Derivative Rights
+The following activities are strictly prohibited without prior written
+permission from the copyright holder:
 
-Modifications are permitted solely for private evaluation.
-All derivative works remain the exclusive property of the Licensor and may not be
-distributed, deployed, or published.
+• Commercial use of any kind
+• Production deployment or operational use
+• Academic, institutional, or government use
+• Research use of any form, including experiments, studies, trials,
+  benchmarking, evaluation reports, or comparative analysis
+• Publication or disclosure of results, metrics, screenshots, reviews,
+  analyses, or derived findings
+• Redistribution, sublicensing, or relicensing
+• Repackaging or bundling with other software or services
+• Creation of derivative works
+• Independent development based on this software
+• Copying or reimplementation of algorithms, architecture, structure,
+  or implementation patterns
+• Use as training data or reference material for machine learning or
+  artificial intelligence systems
+• Reverse engineering for the purpose of creating competitive,
+  substitute, or derivative products
 
-5. Contributions and IP Assignment
+----------------------------------------------------------------------
+CONTRIBUTIONS
+----------------------------------------------------------------------
 
-By submitting any contribution (code, documentation, tests, designs, suggestions):
+You may submit feedback, issues, suggestions, or pull requests.
 
-- You irrevocably assign all intellectual property rights to Leon Priest
-- You waive moral rights to the extent permitted by law
-- Licensor may use, modify, commercialise, sublicense, or relicense the contribution
-- No contributor retains ownership unless a separate written agreement exists
+However:
 
-6. No Patent or Trademark Rights
+• Submission of contributions does not grant any license, ownership,
+  or usage rights
+• All intellectual property remains exclusively with the author
+• The author retains sole discretion to accept, modify, or reject any
+  contribution
+• Contributors receive no rights to reuse, redistribute, or repurpose
+  any portion of the software or its concepts
 
-This License grants no patent, trademark, or branding rights.
-All Keystone names and marks remain the exclusive property of Licensor.
+----------------------------------------------------------------------
+INTELLECTUAL PROPERTY
+----------------------------------------------------------------------
 
-7. Dual Licensing and Reserved Rights
+All intellectual property rights, including but not limited to
+copyright, design, architecture, algorithms, documentation, and
+implementation, remain the exclusive property of the author.
 
-Licensor retains the exclusive right to grant:
-- Commercial licenses
-- Government licenses
-- Defence licenses
-- Research institution licenses
-- Enterprise deployment rights
-- OEM and embedded rights
+No rights are granted except those expressly stated in this license.
 
-All rights not expressly granted are reserved.
+----------------------------------------------------------------------
+NO WARRANTY
+----------------------------------------------------------------------
 
-8. Termination
+This software is provided “AS IS”, without warranty of any kind, express
+or implied, including but not limited to warranties of merchantability,
+fitness for a particular purpose, accuracy, reliability, or security.
 
-Any violation of this License immediately terminates all rights.
-Upon termination, all copies must be destroyed.
+----------------------------------------------------------------------
+LIMITATION OF LIABILITY
+----------------------------------------------------------------------
 
-9. Disclaimer
+In no event shall the author be liable for any claim, damages, or other
+liability, whether in an action of contract, tort, or otherwise,
+arising from, out of, or in connection with the software or its use.
 
-THE SOFTWARE IS PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND.
+----------------------------------------------------------------------
+TERMINATION
+----------------------------------------------------------------------
 
-10. Limitation of Liability
+Any violation of this license immediately terminates all permissions
+granted herein.
 
-LICENSOR SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM USE OF THE SOFTWARE.
+Upon termination, you must cease all use of the software and delete
+all copies in your possession or control.
 
-END OF LICENSE
+----------------------------------------------------------------------
+CONTACT & PERMISSIONS
+----------------------------------------------------------------------
+
+Requests for permission, alternative licensing, or commercial use must
+be made directly to the author and require explicit written approval.
+
+----------------------------------------------------------------------
+END OF PETL v1.0 — CANONICAL TEXT
+----------------------------------------------------------------------
+
