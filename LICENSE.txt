@@ -1,0 +1,94 @@
+Keystone Evaluation & Testing License (KETL) v1.0
+
+Copyright © 2026 Leon Priest
+All rights reserved.
+
+This Software is provided solely for private technical evaluation and testing.
+No research, academic, institutional, or production use is permitted.
+
+1. Ownership
+
+All right, title, and interest in and to this Software, including all source code,
+documentation, designs, architectures, algorithms, models, and derivatives, are
+the exclusive property of Leon Priest (“Licensor”).
+
+No ownership rights are transferred under this License.
+
+2. Grant of Limited Rights
+
+Licensor grants you a limited, non-exclusive, non-transferable, non-sublicensable,
+revocable right to:
+
+- View the source code
+- Run the Software locally
+- Perform functional testing and evaluation
+- Inspect architecture and behaviour
+- Conduct security and performance testing for evaluation purposes only
+
+3. Prohibited Uses
+
+You may not, directly or indirectly:
+
+a) Use the Software for research of any kind (academic, industrial, or institutional)
+b) Use the Software within or on behalf of any university, research body, government
+   agency, defence organisation, or publicly funded institution, including but not
+   limited to CSIRO, DSTG, or their contractors, without a separate written license
+c) Use the Software to develop, train, improve, benchmark, or validate any other AI
+   or software system
+d) Integrate the Software into any product, service, SDK, API, workflow, or pipeline
+e) Deploy the Software in production or operational environments
+f) Offer the Software as SaaS, PaaS, API, or hosted service
+g) Distribute, publish, sublicense, sell, rent, lease, or transfer the Software
+h) Create or distribute derivative works or independent forks
+i) Extract datasets, prompts, internal representations, or learned behaviour
+j) Train machine learning models on the Software or its outputs
+k) Publish papers, benchmarks, evaluations, or comparative studies based on the Software
+l) Use the Software for grant-funded, defence-funded, or institution-funded work
+m) Circumvent these restrictions via “non-commercial”, “fair use”, or “research” exceptions
+
+4. No Derivative Rights
+
+Modifications are permitted solely for private evaluation.
+All derivative works remain the exclusive property of the Licensor and may not be
+distributed, deployed, or published.
+
+5. Contributions and IP Assignment
+
+By submitting any contribution (code, documentation, tests, designs, suggestions):
+
+- You irrevocably assign all intellectual property rights to Leon Priest
+- You waive moral rights to the extent permitted by law
+- Licensor may use, modify, commercialise, sublicense, or relicense the contribution
+- No contributor retains ownership unless a separate written agreement exists
+
+6. No Patent or Trademark Rights
+
+This License grants no patent, trademark, or branding rights.
+All Keystone names and marks remain the exclusive property of Licensor.
+
+7. Dual Licensing and Reserved Rights
+
+Licensor retains the exclusive right to grant:
+- Commercial licenses
+- Government licenses
+- Defence licenses
+- Research institution licenses
+- Enterprise deployment rights
+- OEM and embedded rights
+
+All rights not expressly granted are reserved.
+
+8. Termination
+
+Any violation of this License immediately terminates all rights.
+Upon termination, all copies must be destroyed.
+
+9. Disclaimer
+
+THE SOFTWARE IS PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND.
+
+10. Limitation of Liability
+
+LICENSOR SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM USE OF THE SOFTWARE.
+
+END OF LICENSE
