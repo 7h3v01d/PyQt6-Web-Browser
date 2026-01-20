@@ -1,6 +1,22 @@
 # PyQt6 Web Browser
 A feature-rich, extensible web browser built with Python and the PyQt6 framework. This project goes beyond a simple web viewer, incorporating advanced features like a secure password manager, a powerful plugin system, and enhanced privacy tools.
 
+⚠️ **LICENSE & USAGE NOTICE — READ FIRST**
+
+This repository is **source-available for private technical evaluation and testing only**.
+
+- ❌ No commercial use  
+- ❌ No production use  
+- ❌ No academic, institutional, or government use  
+- ❌ No research, benchmarking, or publication  
+- ❌ No redistribution, sublicensing, or derivative works  
+- ❌ No independent development based on this code  
+
+All rights remain exclusively with the author.  
+Use of this software constitutes acceptance of the terms defined in **LICENSE.txt**.
+
+---
+
 ## 🚀 Features
 
 - Modern Tabbed Browsing: A familiar and intuitive multi-tab interface.
@@ -61,4 +77,26 @@ The browser is designed to be modular. You can create your own Python plugins an
 
 A valid plugin is a Python file that contains a class named Plugin which inherits from the base Plugin class in interceptors.py.
 
-Enjoy using your custom-built browser!
+## Contribution Policy
+
+Feedback, bug reports, and suggestions are welcome.
+
+You may submit:
+
+- Issues
+- Design feedback
+- Pull requests for review
+
+However:
+
+- Contributions do not grant any license or ownership rights
+- The author retains full discretion over acceptance and future use
+- Contributors receive no rights to reuse, redistribute, or derive from this code
+
+---
+
+## License
+This project is not open-source.
+
+It is licensed under a private evaluation-only license.
+See LICENSE.txt for full terms.
