@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>New Tab</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* Subtle gradient background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Clock */
+  #clock-section {
+    margin-top: 60px;
+    text-align: center;
+  }
+
+  #clock {
+    font-size: 72px;
+    font-weight: 200;
+    letter-spacing: -2px;
+    color: #f1f5f9;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #date {
+    font-size: 15px;
+    color: #94a3b8;
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Search bar */
+  #search-section {
+    margin-top: 36px;
+    width: 100%;
+    max-width: 580px;
+    padding: 0 16px;
+  }
+
+  #search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  #search-icon {
+    position: absolute;
+    left: 16px;
+    color: #64748b;
+    font-size: 16px;
+  }
+
+  #search-bar {
+    width: 100%;
+    padding: 14px 16px 14px 44px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    color: #f1f5f9;
+    font-size: 16px;
+    outline: none;
+    transition: background 0.2s, border-color 0.2s;
+    backdrop-filter: blur(10px);
+  }
+
+  #search-bar::placeholder { color: #64748b; }
+
+  #search-bar:focus {
+    background: rgba(255,255,255,0.11);
+    border-color: rgba(99,102,241,0.6);
+  }
+
+  /* Speed dial */
+  #speed-dial-section {
+    margin-top: 48px;
+    width: 100%;
+    max-width: 800px;
+    padding: 0 24px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  #add-site-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #94a3b8;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  #add-site-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: #e2e8f0;
+  }
+
+  #speed-dial-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 14px;
+  }
+
+  .dial-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 10px 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s, background 0.15s, border-color 0.15s;
+    position: relative;
+    gap: 10px;
+  }
+
+  .dial-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255,255,255,0.09);
+    border-color: rgba(99,102,241,0.4);
+  }
+
+  .dial-card .favicon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: rgba(255,255,255,0.1);
+    padding: 4px;
+  }
+
+  .dial-card .site-name {
+    font-size: 12px;
+    color: #cbd5e1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+
+  .dial-card .remove-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.7);
+    border: none;
+    color: white;
+    font-size: 10px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .dial-card:hover .remove-btn {
+    display: flex;
+  }
+
+  .dial-add-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed rgba(255,255,255,0.15);
+    border-radius: 14px;
+    cursor: pointer;
+    color: #64748b;
+    font-size: 24px;
+    transition: all 0.2s;
+    min-height: 100px;
+    gap: 6px;
+  }
+
+  .dial-add-card:hover {
+    background: rgba(99,102,241,0.1);
+    border-color: rgba(99,102,241,0.4);
+    color: #a5b4fc;
+  }
+
+  .dial-add-card span { font-size: 11px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: #1e2130;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 28px;
+    width: 380px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+
+  .modal h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #f1f5f9;
+  }
+
+  .modal input {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: #f1f5f9;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+
+  .modal input:focus { border-color: rgba(99,102,241,0.6); }
+  .modal input::placeholder { color: #64748b; }
+
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .btn-primary {
+    flex: 1;
+    padding: 10px;
+    background: #6366f1;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-primary:hover { background: #5254cc; }
+
+  .btn-secondary {
+    flex: 1;
+    padding: 10px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+  /* Greeting */
+  #greeting {
+    font-size: 22px;
+    font-weight: 300;
+    color: #94a3b8;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<section id="clock-section">
+  <div id="clock">00:00</div>
+  <div id="greeting">Good morning</div>
+  <div id="date">Loading...</div>
+</section>
+
+<section id="search-section">
+  <div id="search-wrap">
+    <span id="search-icon">🔍</span>
+    <input id="search-bar" type="text" placeholder="Search or enter URL..." autofocus />
+  </div>
+</section>
+
+<section id="speed-dial-section">
+  <div class="section-header">
+    <span class="section-title">Speed Dial</span>
+    <button id="add-site-btn">+ Add site</button>
+  </div>
+  <div id="speed-dial-grid"></div>
+</section>
+
+<!-- Add site modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Add to Speed Dial</h3>
+    <input id="modal-name" type="text" placeholder="Name (e.g. YouTube)" />
+    <input id="modal-url" type="text" placeholder="URL (e.g. https://youtube.com)" />
+    <div class="modal-buttons">
+      <button class="btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn-primary" id="modal-add">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Clock ──────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${h}:${m}`;
+
+  const hour = now.getHours();
+  let g = 'Good evening';
+  if (hour < 12) g = 'Good morning';
+  else if (hour < 17) g = 'Good afternoon';
+  document.getElementById('greeting').textContent = g;
+
+  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('date').textContent = now.toLocaleDateString(undefined, opts);
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// ── Speed Dial ─────────────────────────────────────────────────
+const DEFAULT_SITES = [
+  { name: 'Google',   url: 'https://google.com' },
+  { name: 'YouTube',  url: 'https://youtube.com' },
+  { name: 'Reddit',   url: 'https://reddit.com' },
+  { name: 'GitHub',   url: 'https://github.com' },
+  { name: 'Netflix',  url: 'https://netflix.com' },
+  { name: 'Steam',    url: 'https://store.steampowered.com' },
+];
+
+function loadSites() {
+  try {
+    const saved = localStorage.getItem('speedDial');
+    return saved ? JSON.parse(saved) : DEFAULT_SITES;
+  } catch { return DEFAULT_SITES; }
+}
+
+function saveSites(sites) {
+  try { localStorage.setItem('speedDial', JSON.stringify(sites)); } catch {}
+}
+
+function faviconUrl(url) {
+  try {
+    const domain = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  } catch { return ''; }
+}
+
+function renderDial() {
+  const sites = loadSites();
+  const grid = document.getElementById('speed-dial-grid');
+  grid.innerHTML = '';
+
+  sites.forEach((site, i) => {
+    const a = document.createElement('a');
+    a.className = 'dial-card';
+    a.href = site.url;
+    a.title = site.url;
+
+    const img = document.createElement('img');
+    img.className = 'favicon';
+    img.src = faviconUrl(site.url);
+    img.onerror = () => { img.style.display = 'none'; };
+
+    const name = document.createElement('span');
+    name.className = 'site-name';
+    name.textContent = site.name;
+
+    const rm = document.createElement('button');
+    rm.className = 'remove-btn';
+    rm.textContent = '×';
+    rm.title = 'Remove';
+    rm.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const s = loadSites();
+      s.splice(i, 1);
+      saveSites(s);
+      renderDial();
+    });
+
+    a.appendChild(img);
+    a.appendChild(name);
+    a.appendChild(rm);
+    grid.appendChild(a);
+  });
+
+  // Add placeholder card
+  const addCard = document.createElement('div');
+  addCard.className = 'dial-add-card';
+  addCard.innerHTML = '+<span>Add site</span>';
+  addCard.addEventListener('click', openModal);
+  grid.appendChild(addCard);
+}
+
+// ── Modal ──────────────────────────────────────────────────────
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('modal-name').focus();
+}
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('open');
+});
+
+document.getElementById('modal-add').addEventListener('click', () => {
+  let name = document.getElementById('modal-name').value.trim();
+  let url = document.getElementById('modal-url').value.trim();
+  if (!url) return;
+  if (!url.startsWith('http')) url = 'https://' + url;
+  if (!name) { try { name = new URL(url).hostname; } catch { name = url; } }
+  const sites = loadSites();
+  sites.push({ name, url });
+  saveSites(sites);
+  renderDial();
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-url').value = '';
+});
+
+document.getElementById('add-site-btn').addEventListener('click', openModal);
+
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+
+// ── Search ─────────────────────────────────────────────────────
+document.getElementById('search-bar').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  let val = e.target.value.trim();
+  if (!val) return;
+  if (val.match(/^https?:\/\//) || val.match(/^[\w-]+\.[a-z]{2,}/i)) {
+    if (!val.startsWith('http')) val = 'https://' + val;
+    window.location.href = val;
+  } else {
+    window.location.href = 'https://duckduckgo.com/?q=' + encodeURIComponent(val);
+  }
+});
+
+// ── Init ───────────────────────────────────────────────────────
+renderDial();
+</script>
+</body>
+</html>

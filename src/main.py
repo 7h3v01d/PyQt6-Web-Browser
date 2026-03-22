@@ -1,27 +1,70 @@
 import sys
 import os
+import glob
 import logging
 from PyQt6.QtWidgets import QApplication
 from browser import WebBrowser
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+
+def find_widevine_path():
+    """
+    Dynamically find the Widevine CDM regardless of Chrome version.
+    Searches all installed Chrome versions and returns the first match.
+    """
+    base = r"C:\Program Files\Google\Chrome\Application"
+    pattern = os.path.join(base, "*", "WidevineCdm", "_platform_specific", "win_x64", "widevinecdm.dll")
+    matches = glob.glob(pattern)
+    if matches:
+        # Pick the highest version number
+        def version_key(p):
+            for part in p.split(os.sep):
+                segments = part.split('.')
+                if len(segments) >= 2 and all(s.isdigit() for s in segments):
+                    return [int(s) for s in segments]
+            return [0]
+        matches.sort(key=version_key, reverse=True)
+        return matches[0]
+
+    # Also check Chrome Beta / Dev channels
+    for channel in ("Chrome Beta", "Chrome Dev", "Chrome SxS"):
+        pattern2 = os.path.join(
+            r"C:\Program Files\Google", channel,
+            "Application", "*", "WidevineCdm", "_platform_specific", "win_x64", "widevinecdm.dll"
+        )
+        matches2 = glob.glob(pattern2)
+        if matches2:
+            return matches2[0]
+
+    return None
+
+
 if __name__ == "__main__":
-    # Setup logging for debugging
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger(__name__)
-    
-    # Set environment variables for Widevine and proprietary codecs
-    widevine_path = r"C:\Program Files\Google\Chrome\Application\139.0.7258.155\WidevineCdm\_platform_specific\win_x64\widevinecdm.dll"
-    flags = f'--enable-proprietary-codecs --enable-widevine --widevine-path="{widevine_path}"'
-    
-    if os.path.exists(widevine_path):
-        logger.debug(f"Widevine CDM found at {widevine_path}")
+    widevine_path = find_widevine_path()
+    flags = "--enable-proprietary-codecs"
+
+    if widevine_path:
+        flags += f' --enable-widevine --widevine-path="{widevine_path}"'
+        logger.info(f"Widevine CDM found: {widevine_path}")
     else:
-        logger.error(f"Widevine CDM not found at {widevine_path}")
-    
+        logger.warning(
+            "Widevine CDM not found. Netflix/DRM video will not work. "
+            "Make sure Google Chrome is installed."
+        )
+
     os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = flags
-    logger.debug(f"QTWEBENGINE_CHROMIUM_FLAGS set to: {flags}")
-    
+
+    # Suppress the noisy Qt compositor log spam
+    os.environ.setdefault('QTWEBENGINE_CHROMIUM_FLAGS',
+                          os.environ.get('QTWEBENGINE_CHROMIUM_FLAGS', '') +
+                          ' --disable-logging')
+
     app = QApplication(sys.argv)
+    app.setApplicationName("Browser")
+    app.setOrganizationName("Personal")
+
     window = WebBrowser()
     window.show()
     sys.exit(app.exec())
