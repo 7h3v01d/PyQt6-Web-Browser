@@ -1,0 +1,7 @@
+{
+  "homepage": "newtab",
+  "ad_blocker_enabled": true,
+  "tor_enabled": false,
+  "autofill_enabled": true,
+  "dark_mode": true
+}
