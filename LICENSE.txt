@@ -1,4 +1,4 @@
-PyQt6-Web-Browser
+Personal Web-Browser v2.0
 PRIVATE EVALUATION & TESTING LICENSE (PETL) v1.0
 CANONICAL TEXT
 
