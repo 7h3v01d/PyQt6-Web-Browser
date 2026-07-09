@@ -628,7 +628,7 @@ class PipWindow(QWidget):
 class WebBrowser(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Browser")
+        self.setWindowTitle("Blackline Browser")
         self.setGeometry(100, 100, 1280, 820)
 
         # ── State ──────────────────────────────────────────────────────────
