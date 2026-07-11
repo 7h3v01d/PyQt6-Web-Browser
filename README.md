@@ -1,4 +1,5 @@
-# 🌐 Blackline Browser
+<img width="623" height="132" alt="Blackline Browser" src="https://github.com/user-attachments/assets/7e62b484-5683-42df-822d-1a1dd2492420" />
+
 
 A privacy-focused personal browser built on **PyQt6 + QtWebEngine**, with a signature dark-industrial UI, a speed-dial new-tab page, DRM video support, ad blocking, an encrypted password vault, and a plugin system. Built as a daily driver for personal web use.
 
