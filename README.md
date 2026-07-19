@@ -10,7 +10,7 @@ A privacy-focused personal browser built on **PyQt6 + QtWebEngine**, with a sign
 
 ---
 
-<img width="1282" height="852" alt="webbrowser" src="https://github.com/user-attachments/assets/d5335cda-b782-4655-a138-e524f19e6ae9" />
+<img width="1282" height="852" alt="screenshot" src="https://github.com/user-attachments/assets/e6d512bc-bd5c-4832-891d-48234c364d28" />
 
 ---
 
