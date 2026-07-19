@@ -1,4 +1,5 @@
 import os
+import re
 import urllib.request
 import logging
 from PyQt6.QtWebEngineCore import QWebEngineUrlRequestInterceptor
@@ -13,6 +14,7 @@ EASYLIST_MIRRORS = [
 ]
 
 EASYLIST_FILE = "easylist.txt"
+_HOSTNAME_RE = re.compile(r"^[a-z0-9]([a-z0-9\-_.]*[a-z0-9])?$")
 EASYLIST_MAX_AGE_DAYS = 7
 
 
@@ -74,7 +76,7 @@ class AdBlockInterceptor(QWebEngineUrlRequestInterceptor):
 
     def __init__(self):
         super().__init__()
-        self.ad_filters = []
+        self.ad_filters = set()
         self.enabled = True
         self.load_easylist()
 
@@ -109,26 +111,67 @@ class AdBlockInterceptor(QWebEngineUrlRequestInterceptor):
                     return
                 logger.warning("Using stale EasyList (all mirrors failed).")
         try:
-            filters = []
+            filters = set()
+            skipped = 0
             with open(EASYLIST_FILE, "r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
-                    line = line.strip()
-                    if line and not line.startswith(("[", "!")) and "||" in line:
-                        domain = line.split("||")[1].split("^")[0]
-                        if domain:
-                            filters.append(domain.lower())
+                    domain = self._parse_rule(line.strip())
+                    if domain:
+                        filters.add(domain)
+                    else:
+                        skipped += 1
             self.ad_filters = filters
-            logger.info(f"EasyList loaded: {len(self.ad_filters):,} filters")
+            logger.info(f"EasyList loaded: {len(self.ad_filters):,} domain rules "
+                        f"({skipped:,} non-domain rules ignored)")
         except Exception as e:
             logger.error(f"Failed to parse EasyList: {e}")
+
+    @staticmethod
+    def _parse_rule(line: str):
+        """
+        Extract a blockable hostname from an EasyList line, or None.
+
+        Only plain domain anchors are honoured — "||doubleclick.net^$third-party".
+        Rules carrying a path, a wildcard, or a $domain= scope are skipped: we
+        have no page context here, so applying them globally is what caused
+        github.com and youtube.com to be blocked outright.
+        """
+        if not line or line.startswith(("[", "!", "@@", "#", "/")):
+            return None
+        if not line.startswith("||"):
+            return None
+        body = line[2:]
+        options = ""
+        if "$" in body:
+            body, options = body.split("$", 1)
+        body = body.split("^")[0].strip().lower()
+        if not body or "/" in body or "*" in body or "." not in body:
+            return None
+        if "domain=" in options:              # site-scoped rule, not global
+            return None
+        if not _HOSTNAME_RE.match(body):
+            return None
+        return body
+
+    def _is_blocked(self, host: str) -> bool:
+        """Exact host or true subdomain match — never a bare substring."""
+        if host in self.ad_filters:
+            return True
+        parts = host.split(".")
+        for i in range(1, len(parts) - 1):
+            if ".".join(parts[i:]) in self.ad_filters:
+                return True
+        return False
 
     def interceptRequest(self, info):
         if not self.enabled:
             return
         host = info.requestUrl().host().lower()
-        if any(w in host for w in self.WHITELIST):
+        if not host:
             return
-        if any(f in host for f in self.ad_filters):
+        if any(host == w or host.endswith("." + w) for w in self.WHITELIST):
+            return
+        if self._is_blocked(host):
             info.block(True)
 
 

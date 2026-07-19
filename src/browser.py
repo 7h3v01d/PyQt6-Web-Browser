@@ -659,6 +659,11 @@ class WebBrowser(QMainWindow):
         s.setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
         s.setAttribute(QWebEngineSettings.WebAttribute.AutoLoadImages, True)
         s.setAttribute(QWebEngineSettings.WebAttribute.FullScreenSupportEnabled, True)
+        # new_tab.html is served from file:// — without these, every remote
+        # resource it requests (favicons, the JetBrains Mono webfont) is
+        # silently dropped by Chromium's local-content policy.
+        s.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
+        s.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
         self.profile.downloadRequested.connect(self.handle_download)
 
         # ── Status bar ─────────────────────────────────────────────────────

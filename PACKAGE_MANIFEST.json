@@ -1,0 +1,180 @@
+{
+  "tool": "project_packager",
+  "version": "3.0.1",
+  "created_utc": "2026-07-19T17:36:09+00:00",
+  "project": "blackline-browser",
+  "file_count": 34,
+  "total_bytes": 604855,
+  "files": [
+    {
+      "path": "assets/blackline_banner.png",
+      "size": 21207,
+      "sha256": "fae74f13acf7fddf910ee984170c581e4f59f60f5266d48302aab628925e4fca"
+    },
+    {
+      "path": "assets/blackline_banner_blk.png",
+      "size": 19435,
+      "sha256": "f4d6cecf9d04657c02713d63847f0a4278665496bc0cf2e29fb4b3359f538c43"
+    },
+    {
+      "path": "assets/Blackwell logo.png",
+      "size": 32583,
+      "sha256": "d8cbb8761c4fc0a0acf89e5ee2dc7116cd7521f5e4cdacea12ed08e41c98b50d"
+    },
+    {
+      "path": "assets/Blackwell symbol logo.png",
+      "size": 22254,
+      "sha256": "3ee0d79c262dc49c97c24e8363edf7539d32c7fdced6bfd9192efa6d93021231"
+    },
+    {
+      "path": "assets/Blackwell symbol logo_128.png",
+      "size": 17521,
+      "sha256": "cae450cae4c1ef21a2f8e374407dfdb8b3aac584f6e452e71da20d9697028710"
+    },
+    {
+      "path": "assets/icon.ico",
+      "size": 16289,
+      "sha256": "873f9865c128f7212c8dd5f082525c713c43d2f56c5f2dc8503761e7b59dded7"
+    },
+    {
+      "path": "assets/screenshot.png",
+      "size": 110542,
+      "sha256": "c9a3858c9fad8ad8c0967a15cde4f3f8990754515f57085a1cd7b5f8152ee02c"
+    },
+    {
+      "path": "assets/splash.png",
+      "size": 24591,
+      "sha256": "db5c1190def6476c5808a860884a64b391fdd98b5100e944bfc72d92f40c8537"
+    },
+    {
+      "path": "CHANGES.md",
+      "size": 2501,
+      "sha256": "57d8f7dbf5bf967ef7431ed077e1f28159fea3521748a3bf09f431e1617c1e84"
+    },
+    {
+      "path": "docs/README_netflix_downloader_plugin.markdown",
+      "size": 5933,
+      "sha256": "76a48a815bf89cbf246019e577c9deaec484c18f3402a116998796f003c87d14"
+    },
+    {
+      "path": "docs/README_proxy_plugin.markdown",
+      "size": 4758,
+      "sha256": "f814e2220f1355e7760d641aa80ad1d6e70a3bf1996bcadebf0f08391c037782"
+    },
+    {
+      "path": "docs/README_repeater_plugin.markdown",
+      "size": 3736,
+      "sha256": "fad3de4c06a8277bbc0eb737608cf51a2bc68375e5fe10383cc9899f37d49467"
+    },
+    {
+      "path": "LICENSE",
+      "size": 5043,
+      "sha256": "ccddaa1be8c0a90e7f73cdcf97fc9866dc4cb1b892e53d5b2e8cfb953c880b0b"
+    },
+    {
+      "path": "README.md",
+      "size": 13446,
+      "sha256": "51daf37896f098f6ecf6bb360f30b1783cc9330ee1a6e889b34669c0e0a52e57"
+    },
+    {
+      "path": "requirements.txt",
+      "size": 92,
+      "sha256": "afec9c7944186ebaff8fa57d067c6e7ab5cf5b60dcd028baa48aff3e253372cb"
+    },
+    {
+      "path": "setup.bat",
+      "size": 22026,
+      "sha256": "0d9d3819ddde53e408c0200744841e1629cd96da718bc4ffe4a2c02db70c5bc8"
+    },
+    {
+      "path": "src/browser.py",
+      "size": 71858,
+      "sha256": "3b36d20518dbca0346bbd149402ddbb2b9af265cccbc5ab2ca85265000bc5a02"
+    },
+    {
+      "path": "src/core/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "src/core/portcore.py",
+      "size": 20416,
+      "sha256": "f74263a6d2d1389523d4493f8272e7732b12f2606dfff55818e4d61c74608c4d"
+    },
+    {
+      "path": "src/dialogs.py",
+      "size": 32694,
+      "sha256": "e249ca64e6c278dc2f70dd00c8fcd45980cdcaa3e5294c3b9cab946830444d06"
+    },
+    {
+      "path": "src/downloader.py",
+      "size": 18915,
+      "sha256": "2b743cab74f14966b816a728ba49988684d494e46ec13db543ef74bea64794cf"
+    },
+    {
+      "path": "src/interceptors.py",
+      "size": 7402,
+      "sha256": "7f247d4f1c31a63b855328fc1dae3542280b1a902c41ea3458f58de46bbe7f62"
+    },
+    {
+      "path": "src/main.py",
+      "size": 3076,
+      "sha256": "b09d6b876349215f8168b9dd82d4fda8c5bd69f64c8ba9e6d9ba7ae62e1d5fc8"
+    },
+    {
+      "path": "src/main_gui.py",
+      "size": 19605,
+      "sha256": "55f0e5e68a13fa7af04deae75f2f8cf46e289dbd42c09648920539661e1e60f9"
+    },
+    {
+      "path": "src/new_tab.html",
+      "size": 44033,
+      "sha256": "59a56fd7e3108781521683a490b43a9d584ede8819bd81ebd6caf23509a40ff7"
+    },
+    {
+      "path": "src/password_manager.js",
+      "size": 2249,
+      "sha256": "fb87f60b8f57a4f994ac4ffef50c26413061b7a24412559b5ee083974a49d3d3"
+    },
+    {
+      "path": "src/plugins/anonymity_plugin.py",
+      "size": 2906,
+      "sha256": "ec7b7f8a6cdad5853d3df244c76ac61dd9fa1653246dac552642107c4ffdcd65"
+    },
+    {
+      "path": "src/plugins/netflix_downloader_plugin.py",
+      "size": 9488,
+      "sha256": "09f7a453235989f585b3af556a28bceab58cc5bfc0e28ff5818a11a9da0d0231"
+    },
+    {
+      "path": "src/plugins/proxy_plugin.py",
+      "size": 5739,
+      "sha256": "947e0ba4902f9264fce9046fe322affa28542959c49c5cc823373680a6b63ef0"
+    },
+    {
+      "path": "src/plugins/repeater_plugin.py",
+      "size": 4244,
+      "sha256": "2c10ea63ae4f157df09fb0504f1892ebc4c416c16470d86a2caf8c82fe5d4d44"
+    },
+    {
+      "path": "src/plugins/sample_plugin.py",
+      "size": 740,
+      "sha256": "b8c2e0d5eae9c6369189eb574d4aa2d49112e80a756bfb7ab0ad6e398e143919"
+    },
+    {
+      "path": "src/plugins/screenshot_plugin.py",
+      "size": 11312,
+      "sha256": "a7c689d133443f7384fd5c5e622976f87a2302e6bbaeded855e95a33224fa966"
+    },
+    {
+      "path": "src/splash.py",
+      "size": 25257,
+      "sha256": "12966a896d36bdbecfea84291af696f5afedffa5b8dd7d37ebbc07233e5508b6"
+    },
+    {
+      "path": "src/vault.py",
+      "size": 2964,
+      "sha256": "ef49cbb2b2c9fb5e9b232055a521da8aab8954ed76c615f5e17ad1d4c5959dd1"
+    }
+  ]
+}
