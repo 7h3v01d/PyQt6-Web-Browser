@@ -904,8 +904,9 @@ class WebBrowser(QMainWindow):
         # File
         file_menu = mb.addMenu("File")
         self._add_action(file_menu, "New Tab", self._new_tab_action, "Ctrl+T")
-        # Ctrl+Shift+N is already bound to Notes, so this follows Firefox.
-        self._add_action(file_menu, "New Private Tab", self.new_private_tab, "Ctrl+Shift+P")
+        # Chrome's Ctrl+Shift+N is taken by Notes and Firefox's Ctrl+Shift+P
+        # by Picture-in-Picture, so private browsing gets Ctrl+Alt+N.
+        self._add_action(file_menu, "New Private Tab", self.new_private_tab, "Ctrl+Alt+N")
         self._add_action(file_menu, "Close Tab", self.close_current_tab, "Ctrl+W")
         file_menu.addSeparator()
         self._add_action(file_menu, "Set Homepage", self.set_homepage)
