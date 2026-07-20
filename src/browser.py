@@ -36,10 +36,26 @@ from PyQt6.QtWebChannel import QWebChannel
 from PyQt6.QtCore import QUrl, Qt, QDateTime, QObject, pyqtSlot, pyqtSignal, QPoint
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPalette, QColor, QFont
 
-from interceptors import Plugin, ChainedInterceptor, AdBlockInterceptor
+from interceptors import (
+    Plugin, ChainedInterceptor, AdBlockInterceptor, HttpsOnlyInterceptor,
+)
 from dialogs import HistoryDialog, DevToolsDialog, PasswordManagerDialog, BookmarksDialog, NoteSidebar
 from vault import Vault, VAULT_FILE, UnlockResult
 from splash import VaultPasswordDialog
+from storage import (
+    data_path, read_json, read_json_with_recovery, write_json, migrate_legacy_file,
+)
+from tls import (
+    CertExceptionStore, CertSeverity, classify_certificate_error,
+    confirmation_phrase, interstitial_text,
+)
+from cosmetic import build_injection_js, build_removal_js
+from privacy import (
+    should_record_history, should_persist_tab, tab_label, privacy_summary,
+)
+from plugin_guard import (
+    PluginGuard, PluginStatus, hash_file, resolve_plugin_dir,
+)
 from main_gui import DownloadPanel
 
 
@@ -489,10 +505,14 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = QWebChan
 # ─────────────────────────────────────────────────────────────────────────────
 
 NEW_TAB_HTML = os.path.join(os.path.dirname(__file__), "new_tab.html")
-HISTORY_FILE  = "history.json"
-TABS_FILE     = "tabs.json"
-SETTINGS_FILE = "settings.json"
-CONSOLE_HIST  = "console_history.json"
+# Anchored on the app root rather than the working directory. Opened by bare
+# filename these resolved against the CWD, so launching from another folder
+# silently started with an empty history and no settings.
+HISTORY_FILE  = data_path("history.json")
+TABS_FILE     = data_path("tabs.json")
+SETTINGS_FILE = data_path("settings.json")
+CONSOLE_HIST  = data_path("console_history.json")
+BOOKMARKS_FILE = data_path("bookmarks_v2.json")
 
 
 # Injected into the PiP mini-player when it shows a YouTube watch page — hides
@@ -647,24 +667,18 @@ class WebBrowser(QMainWindow):
         self.reading_mode_active = False
 
         # ── Profile ────────────────────────────────────────────────────────
-        self.profile = QWebEngineProfile.defaultProfile()
         self.USER_AGENTS = [
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         ]
-        self.profile.setHttpUserAgent(self.USER_AGENTS[0])
-        self.profile.setPersistentStoragePath("webengine_profile")
-        s = self.profile.settings()
-        s.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
-        s.setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
-        s.setAttribute(QWebEngineSettings.WebAttribute.AutoLoadImages, True)
-        s.setAttribute(QWebEngineSettings.WebAttribute.FullScreenSupportEnabled, True)
-        # new_tab.html is served from file:// — without these, every remote
-        # resource it requests (favicons, the JetBrains Mono webfont) is
-        # silently dropped by Chromium's local-content policy.
-        s.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
-        s.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
-        self.profile.downloadRequested.connect(self.handle_download)
+        self.profile = QWebEngineProfile.defaultProfile()
+        self._configure_profile(self.profile, storage_path="webengine_profile")
+
+        # Off-the-record profile, created on demand. Held on self because a
+        # QWebEngineProfile that goes out of scope while pages still use it
+        # takes the renderer down with it.
+        self.private_profile = None
+        self._private_views = set()
 
         # ── Status bar ─────────────────────────────────────────────────────
         self.statusBar = QStatusBar()
@@ -672,6 +686,8 @@ class WebBrowser(QMainWindow):
 
         # ── Ad blocker ─────────────────────────────────────────────────────
         self.ad_blocker = AdBlockInterceptor()
+        self.https_only = HttpsOnlyInterceptor()
+        self.cert_exceptions = CertExceptionStore()
         self.dev_tools   = None
         self.download_panel = None
 
@@ -724,6 +740,11 @@ class WebBrowser(QMainWindow):
         self.apply_theme()
 
         # ── Load settings & session ────────────────────────────────────────
+        # One-time move of data files left in a previous working directory.
+        for _name in ("history.json", "tabs.json", "settings.json",
+                      "console_history.json", "notes.json"):
+            migrate_legacy_file(_name)
+
         self.load_settings()
         self.load_history()
 
@@ -732,12 +753,18 @@ class WebBrowser(QMainWindow):
         self.load_tabs()   # restore previous session on top
 
         # ── Interceptors ───────────────────────────────────────────────────
-        interceptors = [self.ad_blocker]
+        # HTTPS-only runs first so a rewritten URL is what everything
+        # downstream, including the ad blocker, actually sees.
+        interceptors = [self.https_only, self.ad_blocker]
         for plugin in self.plugins:
             interceptor = plugin.get_interceptor()
             if interceptor:
                 interceptors.append(interceptor)
-        self.profile.setUrlRequestInterceptor(ChainedInterceptor(interceptors))
+        self._interceptor_chain = ChainedInterceptor(interceptors)
+        self.profile.setUrlRequestInterceptor(self._interceptor_chain)
+
+        # ── Cosmetic filtering ─────────────────────────────────────────────
+        self._install_cosmetic_stylesheet()
 
     # ─────────────────────────────────────────────────────────────────────
     # Theme
@@ -877,6 +904,8 @@ class WebBrowser(QMainWindow):
         # File
         file_menu = mb.addMenu("File")
         self._add_action(file_menu, "New Tab", self._new_tab_action, "Ctrl+T")
+        # Ctrl+Shift+N is already bound to Notes, so this follows Firefox.
+        self._add_action(file_menu, "New Private Tab", self.new_private_tab, "Ctrl+Shift+P")
         self._add_action(file_menu, "Close Tab", self.close_current_tab, "Ctrl+W")
         file_menu.addSeparator()
         self._add_action(file_menu, "Set Homepage", self.set_homepage)
@@ -887,6 +916,8 @@ class WebBrowser(QMainWindow):
         self._add_action(view_menu, "Developer Tools", self.toggle_dev_tools, "Ctrl+Shift+I")
         self._add_action(view_menu, "Show Downloads", self.show_download_manager, "Ctrl+J")
         self._add_action(view_menu, "Show Notes", self.toggle_notes, "Ctrl+Shift+N")
+        view_menu.addSeparator()
+        self._add_action(view_menu, "HTTPS-Only Mode", self.toggle_https_only)
         view_menu.addSeparator()
         self._add_action(view_menu, "Picture-in-Picture", self.toggle_pip, "Ctrl+Shift+P")
         self._add_action(view_menu, "Reading Mode", self.toggle_reading_mode, "Ctrl+Shift+R")
@@ -976,10 +1007,13 @@ class WebBrowser(QMainWindow):
     # Tab management
     # ─────────────────────────────────────────────────────────────────────
 
-    def add_new_tab(self, url, label="New Tab"):
+    def add_new_tab(self, url, label="New Tab", private=False):
         browser = QWebEngineView()
-        page = QWebEnginePage(self.profile, browser)
+        profile = self._get_private_profile() if private else self.profile
+        page = QWebEnginePage(profile, browser)
         browser.setPage(page)
+        if private:
+            self._private_views.add(browser)
         page.setWebChannel(self.channel)
         page.runJavaScript(QWEBCHANNEL_JS_CODE)
         page.loadFinished.connect(lambda ok: self.on_load_finished(ok, browser))
@@ -987,25 +1021,30 @@ class WebBrowser(QMainWindow):
         # HTML5 fullscreen (YouTube etc.) — accept the page's request and go real fullscreen
         page.fullScreenRequested.connect(self._handle_fullscreen_request)
         # Handle "open in new tab / new window" from right-click menus
-        page.createWindow = lambda _win_type: self._create_window()
+        page.createWindow = lambda _win_type, p=private: self._create_window(private=p)
         browser.urlChanged.connect(self.update_urlbar)
-        browser.titleChanged.connect(lambda title: self.tabs.setTabText(self.tabs.indexOf(browser), title[:30] or "New Tab"))
+        browser.titleChanged.connect(
+            lambda title, b=browser: self.tabs.setTabText(
+                self.tabs.indexOf(b), tab_label(title, self.is_private_view(b))))
         browser.loadProgress.connect(lambda p: self._update_load_progress(p, browser))
         browser.load(url)
-        index = self.tabs.addTab(browser, label)
+        index = self.tabs.addTab(browser, tab_label(label, private))
         self.tabs.setCurrentIndex(index)
         return browser
 
-    def _create_window(self):
-        """Called by QWebEnginePage.createWindow — opens a blank new tab and returns its page."""
-        browser = self.add_new_tab(self._newtab_url(), "New Tab")
+    def _create_window(self, private=False):
+        """Called by QWebEnginePage.createWindow — opens a blank new tab and
+        returns its page. Links opened from a private tab stay private."""
+        browser = self.add_new_tab(self._newtab_url(), "New Tab", private=private)
         return browser.page()
 
     def close_tab_by_index(self, index):
         if self.tabs.count() > 1:
             widget = self.tabs.widget(index)
             self.tabs.removeTab(index)
+            self._private_views.discard(widget)
             widget.deleteLater()
+            self._release_private_profile_if_unused()
         else:
             # Last tab — just navigate home instead of closing
             self.tabs.currentWidget().load(self._newtab_url())
@@ -1014,15 +1053,16 @@ class WebBrowser(QMainWindow):
         self.update_ssl_indicator(ok, browser)
         # Inject page-level enhancements (in-page PiP hotkey, Shorts wheel nav)
         browser.page().runJavaScript(PAGE_ENHANCE_JS)
+        self._apply_cosmetic_filters(browser)
         if browser == self.tabs.currentWidget():
             url_str = browser.url().toString()
-            # Record history
-            if url_str and not url_str.startswith("file://"):
+            private = self.is_private_view(browser)
+            if should_record_history(url_str, private):
                 ts = QDateTime.currentDateTime().toString("yyyy-MM-dd hh:mm")
                 self.history.append((ts, url_str))
                 self.save_history()
-            # Update notes sidebar domain
-            if hasattr(self, 'note_sidebar'):
+            # Notes are stored per domain, so a private tab must not set one.
+            if hasattr(self, 'note_sidebar') and not private:
                 self.note_sidebar.set_current_url(url_str)
 
     def _update_load_progress(self, percent, browser):
@@ -1343,18 +1383,18 @@ class WebBrowser(QMainWindow):
         dialog.exec()
 
     def save_history(self):
-        try:
-            # Keep last 2000 entries
-            with open(HISTORY_FILE, "w") as f:
-                json.dump(self.history[-2000:], f)
-        except Exception:
-            pass
+        # Keep last 2000 entries. A failure here used to be swallowed
+        # entirely, so a full disk lost history invisibly.
+        if not write_json(HISTORY_FILE, self.history[-2000:]):
+            self.statusBar.showMessage("Could not save history to disk.", 5000)
 
     def load_history(self):
         try:
-            if os.path.exists(HISTORY_FILE):
-                with open(HISTORY_FILE) as f:
-                    data = json.load(f)
+            data, recovered = read_json_with_recovery(HISTORY_FILE, [])
+            if recovered:
+                self.statusBar.showMessage(
+                    "History was damaged — restored from backup.", 6000)
+            if data:
                     # Support both old string format and new [ts, url] tuple format
                     self.history = []
                     for item in data:
@@ -1393,11 +1433,8 @@ class WebBrowser(QMainWindow):
                 folder = "Bookmarks"
             self.bookmarks.append({"title": title, "url": url, "folder": folder})
             # persist
-            try:
-                with open("bookmarks_v2.json", "w") as f:
-                    json.dump(self.bookmarks, f, indent=2)
-            except Exception:
-                pass
+            if not write_json(BOOKMARKS_FILE, self.bookmarks):
+                self.statusBar.showMessage("Could not save bookmark.", 5000)
             self.statusBar.showMessage(f"Bookmarked: {title[:50]}", 3000)
         else:
             self.statusBar.showMessage("Already bookmarked", 2000)
@@ -1443,22 +1480,167 @@ class WebBrowser(QMainWindow):
     # Plugins
     # ─────────────────────────────────────────────────────────────────────
 
+    def _install_cosmetic_stylesheet(self):
+        """
+        Inject the generic element-hiding rules as a profile-wide user script.
+
+        Done once at document creation rather than per navigation: the
+        generic sheet is ~190 KB and rebuilding it on every load would be
+        wasted work. Host-specific rules are applied separately on load.
+        """
+        self._cosmetic_script = None
+        if not getattr(self.ad_blocker, "cosmetics", None):
+            return
+        css = self.ad_blocker.cosmetics.generic_css()
+        if not css:
+            return
+        script = QWebEngineScript()
+        script.setName("blackline-cosmetic-generic")
+        script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentCreation)
+        script.setWorldId(QWebEngineScript.ScriptWorldId.ApplicationWorld)
+        script.setRunsOnSubFrames(True)
+        script.setSourceCode(build_injection_js(css, "blackline-cosmetic-generic"))
+        self._cosmetic_script = script
+        self.profile.scripts().insert(script)
+
+    def _apply_cosmetic_filters(self, browser):
+        """Apply host-scoped element hiding to a freshly loaded page."""
+        if not self.ad_blocker.enabled:
+            return
+        cosmetics = getattr(self.ad_blocker, "cosmetics", None)
+        if not cosmetics:
+            return
+        host = browser.url().host()
+        if not host:
+            return
+        css = cosmetics.specific_css_for(host)
+        if css:
+            browser.page().runJavaScript(build_injection_js(css))
+
+    def _configure_profile(self, profile, storage_path=None):
+        """
+        Apply identical engine settings to every profile.
+
+        Shared so the private profile cannot silently drift from the default
+        one — a missing LocalContentCanAccessRemoteUrls here would break the
+        new tab page in private mode only, which is exactly the kind of bug
+        that survives for months.
+        """
+        profile.setHttpUserAgent(self.USER_AGENTS[0])
+        if storage_path:
+            profile.setPersistentStoragePath(storage_path)
+        s = profile.settings()
+        s.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
+        s.setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
+        s.setAttribute(QWebEngineSettings.WebAttribute.AutoLoadImages, True)
+        s.setAttribute(QWebEngineSettings.WebAttribute.FullScreenSupportEnabled, True)
+        # new_tab.html is served from file:// — without these, every remote
+        # resource it requests (favicons, the JetBrains Mono webfont) is
+        # silently dropped by Chromium's local-content policy.
+        s.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
+        s.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
+        profile.downloadRequested.connect(self.handle_download)
+        return profile
+
+    def _get_private_profile(self):
+        """An off-the-record profile — constructed with no name, so nothing
+        it holds is ever written to disk."""
+        if self.private_profile is None:
+            profile = QWebEngineProfile(self)          # parented: no GC surprise
+            self._configure_profile(profile)           # no storage path
+            chain = getattr(self, "_interceptor_chain", None) or self.ad_blocker
+            if chain:
+                profile.setUrlRequestInterceptor(chain)
+            self.private_profile = profile
+        return self.private_profile
+
+    def is_private_view(self, browser) -> bool:
+        return browser in self._private_views
+
+    def current_tab_is_private(self) -> bool:
+        return self.is_private_view(self.tabs.currentWidget())
+
+    def new_private_tab(self):
+        self.add_new_tab(self._newtab_url(), "New Tab", private=True)
+        self.statusBar.showMessage(privacy_summary(True), 8000)
+
+    def _release_private_profile_if_unused(self):
+        """
+        Drop the off-the-record profile once no private tab remains, so its
+        in-memory cookies and cache are discarded rather than lingering for
+        the life of the window.
+        """
+        self._private_views = {v for v in self._private_views
+                               if self.tabs.indexOf(v) != -1}
+        if not self._private_views and self.private_profile is not None:
+            self.private_profile.deleteLater()
+            self.private_profile = None
+
     def load_plugins(self):
-        plugin_dir = Path("plugins")
-        if plugin_dir.exists():
-            sys.path.append(str(plugin_dir))
-            for plugin_path in plugin_dir.glob("*.py"):
-                module_name = plugin_path.stem
-                try:
-                    module = import_module(module_name)
-                    plugin_class = getattr(module, "Plugin", None)
-                    if plugin_class:
-                        plugin = plugin_class(self)
-                        plugin.init_plugin()
-                        plugin.add_to_menu(self.menuBar().addMenu(plugin.name))
-                        self.plugins.append(plugin)
-                except Exception as e:
-                    self.statusBar.showMessage(f"Failed to load plugin {module_name}: {str(e)}", 5000)
+        """
+        Load approved plugins only.
+
+        Plugins execute with full process privileges, so this is deny-first:
+        a file is imported only if its SHA-256 matches a previously approved
+        entry in plugins.lock. Anything new or modified prompts first.
+        """
+        plugin_dir = resolve_plugin_dir(__file__)
+        if not plugin_dir.is_dir():
+            return
+
+        guard = PluginGuard(plugin_dir)
+        self.plugin_guard = guard
+
+        for path, status in guard.scan():
+            if not status.may_load:
+                if not self._prompt_plugin_approval(path, status):
+                    self.statusBar.showMessage(
+                        f"Plugin blocked: {path.name}", 5000)
+                    continue
+                guard.approve(path)
+
+            if str(plugin_dir) not in sys.path:
+                sys.path.append(str(plugin_dir))
+
+            module_name = path.stem
+            try:
+                module = import_module(module_name)
+                plugin_class = getattr(module, "Plugin", None)
+                if plugin_class:
+                    plugin = plugin_class(self)
+                    plugin.init_plugin()
+                    plugin.add_to_menu(self.menuBar().addMenu(plugin.name))
+                    self.plugins.append(plugin)
+            except Exception as e:
+                self.statusBar.showMessage(
+                    f"Failed to load plugin {module_name}: {e}", 5000)
+
+        guard.prune()
+
+    def _prompt_plugin_approval(self, path, status) -> bool:
+        """Ask before executing an unrecognised or modified plugin."""
+        digest = hash_file(path)
+        if status is PluginStatus.CHANGED:
+            headline = f"The plugin '{path.name}' has changed since you approved it."
+            detail = ("If you did not edit this file yourself, do not run it. "
+                      "A modified plugin runs with the same privileges as the browser.")
+        elif status is PluginStatus.REVOKED:
+            headline = f"The plugin '{path.name}' was previously blocked."
+            detail = "Run it anyway?"
+        else:
+            headline = f"New plugin found: '{path.name}'."
+            detail = ("Plugins run with full access to your files, browsing data, "
+                      "and vault. Only approve plugins you trust.")
+
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle("Plugin Approval")
+        box.setText(headline)
+        box.setInformativeText(f"{detail}\n\nSHA-256: {digest[:16]}…")
+        box.setStandardButtons(QMessageBox.StandardButton.Yes |
+                               QMessageBox.StandardButton.No)
+        box.setDefaultButton(QMessageBox.StandardButton.No)
+        return box.exec() == QMessageBox.StandardButton.Yes
 
     # ─────────────────────────────────────────────────────────────────────
     # Session save / restore
@@ -1470,19 +1652,22 @@ class WebBrowser(QMainWindow):
             for i in range(self.tabs.count()):
                 widget = self.tabs.widget(i)
                 url = widget.url().toString()
-                if url and not url.startswith("file://"):
+                if should_persist_tab(url, self.is_private_view(widget)):
                     urls.append(url)
-            with open(TABS_FILE, "w") as f:
-                json.dump(urls, f)
-            self.statusBar.showMessage(f"Session saved ({len(urls)} tabs)", 3000)
+            if write_json(TABS_FILE, urls):
+                self.statusBar.showMessage(f"Session saved ({len(urls)} tabs)", 3000)
+            else:
+                self.statusBar.showMessage("Failed to save session.", 5000)
         except Exception as e:
             self.statusBar.showMessage(f"Failed to save session: {str(e)}", 5000)
 
     def load_tabs(self):
         try:
-            if os.path.exists(TABS_FILE):
-                with open(TABS_FILE) as f:
-                    tabs = json.load(f)
+            tabs, recovered = read_json_with_recovery(TABS_FILE, [])
+            if recovered:
+                self.statusBar.showMessage(
+                    "Session file was damaged — restored previous session.", 6000)
+            if tabs:
                 for url in tabs:
                     if url:
                         self.add_new_tab(QUrl(url), url[:40])
@@ -1500,27 +1685,31 @@ class WebBrowser(QMainWindow):
 
     def save_settings(self):
         try:
-            with open(SETTINGS_FILE, "w") as f:
-                json.dump({
-                    "homepage": self.homepage,
-                    "ad_blocker_enabled": self.ad_blocker.enabled,
-                    "tor_enabled": self.tor_enabled,
-                    "autofill_enabled": self.autofill_enabled,
-                    "dark_mode": self.dark_mode,
-                }, f, indent=2)
+            if not write_json(SETTINGS_FILE, {
+                "homepage": self.homepage,
+                "ad_blocker_enabled": self.ad_blocker.enabled,
+                "tor_enabled": self.tor_enabled,
+                "autofill_enabled": self.autofill_enabled,
+                "dark_mode": self.dark_mode,
+                "https_only": self.https_only.enabled,
+            }):
+                self.statusBar.showMessage("Failed to save settings.", 5000)
         except Exception as e:
             self.statusBar.showMessage(f"Failed to save settings: {str(e)}", 5000)
 
     def load_settings(self):
         try:
-            if os.path.exists(SETTINGS_FILE):
-                with open(SETTINGS_FILE) as f:
-                    s = json.load(f)
+            s, recovered = read_json_with_recovery(SETTINGS_FILE, None)
+            if recovered:
+                self.statusBar.showMessage(
+                    "Settings were damaged — restored from backup.", 6000)
+            if s:
                 self.homepage          = s.get("homepage", "newtab")
                 self.ad_blocker.enabled = s.get("ad_blocker_enabled", True)
                 self.tor_enabled       = s.get("tor_enabled", False)
                 self.autofill_enabled  = s.get("autofill_enabled", True)
                 self.dark_mode         = s.get("dark_mode", True)
+                self.https_only.enabled = s.get("https_only", False)
                 self.toggle_ad_blocker_action.setChecked(self.ad_blocker.enabled)
                 self.toggle_autofill_action.setChecked(self.autofill_enabled)
                 self.theme_btn.setChecked(self.dark_mode)
@@ -1549,17 +1738,86 @@ class WebBrowser(QMainWindow):
     # ─────────────────────────────────────────────────────────────────────
 
     def handle_certificate_error(self, error, browser):
-        reply = QMessageBox.warning(
-            self, "Certificate Error",
-            f"Invalid certificate for {error.url().toString()}: {error.description()}\n\nProceed anyway?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply == QMessageBox.StandardButton.Yes:
+        """
+        Certificate interstitial.
+
+        This used to be a single Yes/No box, which is how interception
+        succeeds in practice. Errors are now graded: revocation and pinning
+        failures cannot be bypassed at all, trust failures need the hostname
+        typed out, and only expiry is a plain confirmation. Overrides last
+        for the session and are keyed by host *and* error.
+        """
+        host = error.url().host()
+        description = error.description()
+        severity = classify_certificate_error(description, error.url().toString())
+
+        if self.cert_exceptions.is_allowed(host, description):
             error.acceptCertificate()
-            self.ssl_label.setText("⚠️")
+            self.ssl_label.setText("⚠")
+            return
+
+        headline, body = interstitial_text(host, description, severity)
+
+        if not severity.may_override:
+            box = QMessageBox(self)
+            box.setIcon(QMessageBox.Icon.Critical)
+            box.setWindowTitle("Connection Blocked")
+            box.setText(headline)
+            box.setInformativeText(body)
+            box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            box.exec()
+            error.rejectCertificate()
+            self.ssl_label.setText("⛔")
+            return
+
+        if severity.requires_typed_confirmation:
+            accepted = self._confirm_by_typing(host, headline, body)
+        else:
+            box = QMessageBox(self)
+            box.setIcon(QMessageBox.Icon.Warning)
+            box.setWindowTitle("Certificate Problem")
+            box.setText(headline)
+            box.setInformativeText(body)
+            box.setStandardButtons(QMessageBox.StandardButton.Cancel |
+                                   QMessageBox.StandardButton.Ok)
+            box.setDefaultButton(QMessageBox.StandardButton.Cancel)
+            box.button(QMessageBox.StandardButton.Ok).setText("Continue anyway")
+            accepted = box.exec() == QMessageBox.StandardButton.Ok
+
+        if accepted:
+            self.cert_exceptions.allow(host, description)
+            error.acceptCertificate()
+            self.ssl_label.setText("⚠")
+            self.statusBar.showMessage(
+                f"Certificate warning bypassed for {host} — this session only.", 8000)
         else:
             error.rejectCertificate()
             self.ssl_label.setText("🔒")
+
+    def _confirm_by_typing(self, host, headline, body) -> bool:
+        """
+        Require the hostname to be typed before a dangerous bypass.
+
+        The friction is the point: it forces the user to read which host
+        they are actually trusting, which is the detail an interception
+        attack relies on them skipping.
+        """
+        expected = confirmation_phrase(host)
+        typed, ok = QInputDialog.getText(
+            self, "Confirm Security Exception",
+            f"{headline}\n\n{body}\n\n"
+            f"To continue, type the hostname exactly:  {expected}",
+        )
+        return bool(ok) and confirmation_phrase(typed) == expected
+
+    def toggle_https_only(self, enabled=None):
+        """Enable or disable automatic http → https upgrading."""
+        if enabled is None:
+            enabled = not self.https_only.enabled
+        self.https_only.enabled = bool(enabled)
+        state = "enabled" if self.https_only.enabled else "disabled"
+        self.statusBar.showMessage(f"HTTPS-only mode {state}.", 4000)
+        self.save_settings()
 
     def update_ssl_indicator(self, ok, browser):
         if browser == self.tabs.currentWidget():
@@ -1575,16 +1833,13 @@ class WebBrowser(QMainWindow):
 
     def load_console_history(self):
         try:
-            if os.path.exists(CONSOLE_HIST):
-                with open(CONSOLE_HIST) as f:
-                    return json.load(f)
+            return read_json(CONSOLE_HIST, []) or []
         except Exception:
             pass
         return []
 
     def save_console_history(self, history):
         try:
-            with open(CONSOLE_HIST, "w") as f:
-                json.dump(history[-200:], f)
+            write_json(CONSOLE_HIST, history[-200:])
         except Exception:
             pass

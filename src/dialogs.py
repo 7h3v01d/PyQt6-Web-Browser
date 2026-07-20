@@ -21,7 +21,6 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import Qt, QUrl, QSortFilterProxyModel
 from PyQt6.QtGui import QColor, QIcon, QFont
 
-BOOKMARKS_FILE = "bookmarks_v2.json"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -121,11 +120,9 @@ class HistoryDialog(QDialog):
         if reply == QMessageBox.StandardButton.Yes:
             if self.parent():
                 self.parent().history.clear()
-                try:
-                    with open("history.json", "w") as f:
-                        json.dump([], f)
-                except Exception:
-                    pass
+                # Must target the same anchored path the browser reads,
+                # or clearing history silently writes to a different file.
+                write_json(HISTORY_FILE, [])
             self.table.setRowCount(0)
 
 
@@ -371,11 +368,9 @@ class BookmarksDialog(QDialog):
     # ── Persistence ───────────────────────────────────────────────────────────
 
     def _save(self):
-        try:
-            with open(BOOKMARKS_FILE, "w") as f:
-                json.dump(self.bookmarks, f, indent=2)
-        except Exception as e:
-            QMessageBox.warning(self, "Save Error", str(e))
+        if not write_json(BOOKMARKS_FILE, self.bookmarks):
+            QMessageBox.warning(self, "Save Error",
+                                f"Could not write {BOOKMARKS_FILE}")
         # Also sync back to browser's bookmarks list
         if self.parent():
             self.parent().bookmarks = self.bookmarks
@@ -383,19 +378,13 @@ class BookmarksDialog(QDialog):
     @staticmethod
     def load_bookmarks():
         """Call from WebBrowser to load bookmarks at startup."""
-        if os.path.exists(BOOKMARKS_FILE):
-            try:
-                with open(BOOKMARKS_FILE) as f:
-                    return json.load(f)
-            except Exception:
-                pass
-        # Fall back to old bookmarks.json format
-        if os.path.exists("bookmarks.json"):
-            try:
-                with open("bookmarks.json") as f:
-                    return json.load(f)
-            except Exception:
-                pass
+        data, recovered = read_json_with_recovery(BOOKMARKS_FILE, None)
+        if isinstance(data, list):
+            return data
+        # Fall back to the pre-v2 format, anchored the same way.
+        legacy = read_json(data_path("bookmarks.json"), None)
+        if isinstance(legacy, list):
+            return legacy
         return []
 
 
@@ -403,7 +392,11 @@ class BookmarksDialog(QDialog):
 # Note-Taking Sidebar
 # ─────────────────────────────────────────────────────────────────────────────
 
-NOTES_FILE = "notes.json"
+from storage import data_path, read_json, read_json_with_recovery, write_json
+
+NOTES_FILE     = data_path("notes.json")
+BOOKMARKS_FILE = data_path("bookmarks_v2.json")
+HISTORY_FILE   = data_path("history.json")
 
 class NoteSidebar(QWidget):
     """
@@ -419,20 +412,15 @@ class NoteSidebar(QWidget):
         self._show_note("global")
 
     def _load_notes(self):
-        if os.path.exists(NOTES_FILE):
-            try:
-                with open(NOTES_FILE) as f:
-                    return json.load(f)
-            except Exception:
-                pass
+        notes, _recovered = read_json_with_recovery(NOTES_FILE, None)
+        if isinstance(notes, dict):
+            return notes
         return {"global": ""}
 
     def _save_notes(self):
-        try:
-            with open(NOTES_FILE, "w") as f:
-                json.dump(self.notes, f, indent=2)
-        except Exception:
-            pass
+        # Notes are typed by hand and not recoverable from anywhere else,
+        # so this is the write most worth making atomic.
+        write_json(NOTES_FILE, self.notes)
 
     def _build_ui(self):
         layout = QVBoxLayout(self)

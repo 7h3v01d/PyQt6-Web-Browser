@@ -1,11 +1,16 @@
 {
   "tool": "project_packager",
   "version": "3.0.1",
-  "created_utc": "2026-07-19T17:36:09+00:00",
+  "created_utc": "2026-07-20T03:44:34+00:00",
   "project": "blackline-browser",
-  "file_count": 34,
-  "total_bytes": 604855,
+  "file_count": 55,
+  "total_bytes": 752605,
   "files": [
+    {
+      "path": ".gitignore",
+      "size": 92,
+      "sha256": "b7f0726d56c390365573ecd5b61805dda0b99e5e80b5ece1b6da1be930456a92"
+    },
     {
       "path": "assets/blackline_banner.png",
       "size": 21207,
@@ -47,6 +52,11 @@
       "sha256": "db5c1190def6476c5808a860884a64b391fdd98b5100e944bfc72d92f40c8537"
     },
     {
+      "path": "BLACKLINE_CAPABILITY_AUDIT.md",
+      "size": 14697,
+      "sha256": "1a8f6e09116bfb90f87a6da63a6a38498a4a3111f26f09f59dc8d20b2e200d67"
+    },
+    {
       "path": "CHANGES.md",
       "size": 2501,
       "sha256": "57d8f7dbf5bf967ef7431ed077e1f28159fea3521748a3bf09f431e1617c1e84"
@@ -72,24 +82,39 @@
       "sha256": "ccddaa1be8c0a90e7f73cdcf97fc9866dc4cb1b892e53d5b2e8cfb953c880b0b"
     },
     {
+      "path": "pytest.ini",
+      "size": 266,
+      "sha256": "8778c5d13083488d412de8922780ae9834ff7a0ce2cc5f0c15c99b4b286d4ac3"
+    },
+    {
       "path": "README.md",
       "size": 13446,
       "sha256": "51daf37896f098f6ecf6bb360f30b1783cc9330ee1a6e889b34669c0e0a52e57"
     },
     {
+      "path": "requirements-dev.txt",
+      "size": 48,
+      "sha256": "9f6cac9a3f99ec65045762ea7d2bbb15fd04b7ed5e1ae3ca4980405ef4f7993e"
+    },
+    {
       "path": "requirements.txt",
-      "size": 92,
-      "sha256": "afec9c7944186ebaff8fa57d067c6e7ab5cf5b60dcd028baa48aff3e253372cb"
+      "size": 100,
+      "sha256": "7815b217dae0dc4c9026f723417cfaff2a779ce3e1e957b756069b238f6729f4"
     },
     {
       "path": "setup.bat",
-      "size": 22026,
-      "sha256": "0d9d3819ddde53e408c0200744841e1629cd96da718bc4ffe4a2c02db70c5bc8"
+      "size": 24026,
+      "sha256": "c8d6a995ded401e678e906a911e3f79d8bad4ca6f1bc8116a5cca4f6092d19a1"
+    },
+    {
+      "path": "src/adblock.py",
+      "size": 4669,
+      "sha256": "272e01543739fe44d03a9452a447b3f62c17a2ab48d524b1109cca87ebb5845d"
     },
     {
       "path": "src/browser.py",
-      "size": 71858,
-      "sha256": "3b36d20518dbca0346bbd149402ddbb2b9af265cccbc5ab2ca85265000bc5a02"
+      "size": 85268,
+      "sha256": "6e64400487510285d7b5476acff17fede541a268c06bcd7aea9b23d4335eb149"
     },
     {
       "path": "src/core/__init__.py",
@@ -102,9 +127,14 @@
       "sha256": "f74263a6d2d1389523d4493f8272e7732b12f2606dfff55818e4d61c74608c4d"
     },
     {
+      "path": "src/cosmetic.py",
+      "size": 9198,
+      "sha256": "cd376f6afc5d00c6f2c6d500f727fbbd998a28804b49a232957e21f51748fa68"
+    },
+    {
       "path": "src/dialogs.py",
-      "size": 32694,
-      "sha256": "e249ca64e6c278dc2f70dd00c8fcd45980cdcaa3e5294c3b9cab946830444d06"
+      "size": 32660,
+      "sha256": "6c79eb3d2617950e72cb3c14dede4ecf615220676f87d77d102285ef84a4ba0b"
     },
     {
       "path": "src/downloader.py",
@@ -113,13 +143,13 @@
     },
     {
       "path": "src/interceptors.py",
-      "size": 7402,
-      "sha256": "7f247d4f1c31a63b855328fc1dae3542280b1a902c41ea3458f58de46bbe7f62"
+      "size": 7962,
+      "sha256": "57d29d0cec1b951da87cb5058c57e7d4e2ce71b0ae55bb977106b7356c2f7e45"
     },
     {
       "path": "src/main.py",
-      "size": 3076,
-      "sha256": "b09d6b876349215f8168b9dd82d4fda8c5bd69f64c8ba9e6d9ba7ae62e1d5fc8"
+      "size": 3603,
+      "sha256": "faf3a1cf979f45d34aa5ccbd01642ef475dede3257439608bd08224620faaf5d"
     },
     {
       "path": "src/main_gui.py",
@@ -135,6 +165,11 @@
       "path": "src/password_manager.js",
       "size": 2249,
       "sha256": "fb87f60b8f57a4f994ac4ffef50c26413061b7a24412559b5ee083974a49d3d3"
+    },
+    {
+      "path": "src/plugin_guard.py",
+      "size": 7128,
+      "sha256": "544f298be32c14dea266c674fa43532830e014f8ceb7f4726e3fb5278b35f860"
     },
     {
       "path": "src/plugins/anonymity_plugin.py",
@@ -167,14 +202,84 @@
       "sha256": "a7c689d133443f7384fd5c5e622976f87a2302e6bbaeded855e95a33224fa966"
     },
     {
+      "path": "src/plugins.lock",
+      "size": 925,
+      "sha256": "841af0fc84b141388e17436b8b58f59ce3b58912541fa352984ca25d4d895527"
+    },
+    {
+      "path": "src/privacy.py",
+      "size": 2766,
+      "sha256": "25977c608a30aa84acf666e8f5aa6bfb6a3c01b61c26f7f392fd5b6ef916d014"
+    },
+    {
       "path": "src/splash.py",
       "size": 25257,
       "sha256": "12966a896d36bdbecfea84291af696f5afedffa5b8dd7d37ebbc07233e5508b6"
     },
     {
+      "path": "src/storage.py",
+      "size": 4357,
+      "sha256": "3805752fb166be7176173377662abf7a8c04382e2ee3a12f3e614a5e04528dd5"
+    },
+    {
+      "path": "src/tls.py",
+      "size": 7554,
+      "sha256": "b9098c88841f80a23f2c38ab30d725ba80a5f643b5398d291282f26e0f6e096f"
+    },
+    {
       "path": "src/vault.py",
-      "size": 2964,
-      "sha256": "ef49cbb2b2c9fb5e9b232055a521da8aab8954ed76c615f5e17ad1d4c5959dd1"
+      "size": 6062,
+      "sha256": "9abb79288702b82ce1bf3bd04ac1ef4a81805c18e3dc2cb5a40a796a666495f9"
+    },
+    {
+      "path": "tests/conftest.py",
+      "size": 1929,
+      "sha256": "6cbc2544f8d2a061990be6c18443bffec2722bebcedf45dca320674fea5cdef6"
+    },
+    {
+      "path": "tests/test_adblock.py",
+      "size": 6686,
+      "sha256": "283e06299902a8b80fef6c674784680637d47ab0501c166eca1af3f4ff22e058"
+    },
+    {
+      "path": "tests/test_cosmetic.py",
+      "size": 9072,
+      "sha256": "b26e5abd005a5c67a7d51a581805daf5dec3937ae2bba93c671e2390f83462b4"
+    },
+    {
+      "path": "tests/test_new_tab.py",
+      "size": 7171,
+      "sha256": "a8d645907af378036c92966d1aad77ee81873a16c16b39f02df021459d616453"
+    },
+    {
+      "path": "tests/test_plugin_guard.py",
+      "size": 11093,
+      "sha256": "2981a1cac5b54735f5a1770f6dff98c0168f4050cf4299ae4c6f8e3c6290556c"
+    },
+    {
+      "path": "tests/test_privacy.py",
+      "size": 5327,
+      "sha256": "4a85a3c020bb2c4b015685ba37ace5db4eb300459bacc4efebb49335c852e6b4"
+    },
+    {
+      "path": "tests/test_splash.py",
+      "size": 8193,
+      "sha256": "f3b6ba405ed1d56cb1a301e3fa8573405e83152f588acff39274d8ce20f3ef6e"
+    },
+    {
+      "path": "tests/test_storage.py",
+      "size": 8813,
+      "sha256": "710c4487e2d6531c92a93ab914b67a73f8345dc534755c3cf50e35dacea6ae17"
+    },
+    {
+      "path": "tests/test_tls.py",
+      "size": 9532,
+      "sha256": "79464937a64435243f9449f9c1a10d827b217be39b51121c49ee1bd1d05fbfd1"
+    },
+    {
+      "path": "tests/test_vault.py",
+      "size": 8665,
+      "sha256": "3838d04db1617dccb7351967c39add766c692824bfc151cf5a4743086c7e1a7d"
     }
   ]
 }

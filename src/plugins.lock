@@ -1,0 +1,29 @@
+{
+  "plugins": {
+    "anonymity_plugin.py": {
+      "approved": true,
+      "sha256": "ec7b7f8a6cdad5853d3df244c76ac61dd9fa1653246dac552642107c4ffdcd65"
+    },
+    "netflix_downloader_plugin.py": {
+      "approved": true,
+      "sha256": "09f7a453235989f585b3af556a28bceab58cc5bfc0e28ff5818a11a9da0d0231"
+    },
+    "proxy_plugin.py": {
+      "approved": true,
+      "sha256": "947e0ba4902f9264fce9046fe322affa28542959c49c5cc823373680a6b63ef0"
+    },
+    "repeater_plugin.py": {
+      "approved": true,
+      "sha256": "2c10ea63ae4f157df09fb0504f1892ebc4c416c16470d86a2caf8c82fe5d4d44"
+    },
+    "sample_plugin.py": {
+      "approved": true,
+      "sha256": "b8c2e0d5eae9c6369189eb574d4aa2d49112e80a756bfb7ab0ad6e398e143919"
+    },
+    "screenshot_plugin.py": {
+      "approved": true,
+      "sha256": "a7c689d133443f7384fd5c5e622976f87a2302e6bbaeded855e95a33224fa966"
+    }
+  },
+  "version": 1
+}

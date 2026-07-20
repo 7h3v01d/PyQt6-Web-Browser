@@ -2,9 +2,11 @@ import os
 import urllib.request
 import logging
 from PyQt6.QtWebEngineCore import QWebEngineUrlRequestInterceptor
-from PyQt6.QtCore import QDateTime
+from PyQt6.QtCore import QDateTime, QUrl
 
 from adblock import FilterSet, host_matches_any
+from tls import HttpsDecision, https_decision, upgrade_url
+from cosmetic import CosmeticFilterSet
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +16,14 @@ EASYLIST_MIRRORS = [
     "https://easylist.to/easylist/easylist.txt",
 ]
 
+EASYPRIVACY_MIRRORS = [
+    "https://easylist-downloads.adblockplus.org/easyprivacy.txt",
+    "https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy.txt",
+    "https://easylist.to/easylist/easyprivacy.txt",
+]
+
 EASYLIST_FILE = "easylist.txt"
+EASYPRIVACY_FILE = "easyprivacy.txt"
 EASYLIST_MAX_AGE_DAYS = 7
 
 
@@ -68,6 +77,37 @@ class ChainedInterceptor(QWebEngineUrlRequestInterceptor):
                 logger.debug(f"Interceptor error: {str(e)}")
 
 
+class HttpsOnlyInterceptor(QWebEngineUrlRequestInterceptor):
+    """
+    Rewrites http:// navigations to https://.
+
+    Local and RFC1918 hosts are left alone — upgrading them would break
+    the local tooling that has no TLS at all. Hosts the user has chosen to
+    load over http are exempt for the session only.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.enabled = False
+        self.exempt_hosts = set()
+        self.upgrades = 0
+
+    def exempt(self, host):
+        if host:
+            self.exempt_hosts.add(str(host).strip().lower())
+
+    def interceptRequest(self, info):
+        if not self.enabled:
+            return
+        url = info.requestUrl()
+        decision = https_decision(url.toString(), True, self.exempt_hosts)
+        if decision is HttpsDecision.UPGRADE:
+            secure = upgrade_url(url.toString())
+            self.upgrades += 1
+            logger.debug(f"HTTPS-only upgrade: {url.toString()} -> {secure}")
+            info.redirect(QUrl(secure))
+
+
 class AdBlockInterceptor(QWebEngineUrlRequestInterceptor):
     WHITELIST = frozenset([
         'netflix.com', 'licensewidevine.com', 'nflxvideo.net',
@@ -77,6 +117,7 @@ class AdBlockInterceptor(QWebEngineUrlRequestInterceptor):
     def __init__(self):
         super().__init__()
         self.filters = FilterSet()
+        self.cosmetics = CosmeticFilterSet()
         self.enabled = True
         self.load_easylist()
 
@@ -86,21 +127,24 @@ class AdBlockInterceptor(QWebEngineUrlRequestInterceptor):
         cutoff = QDateTime.currentDateTime().addDays(-EASYLIST_MAX_AGE_DAYS).toMSecsSinceEpoch() / 1000
         return os.path.getmtime(EASYLIST_FILE) < cutoff
 
-    def _download_easylist(self):
+    def _download_list(self, mirrors, target):
         """Try each mirror in turn; return True on success."""
         headers = {"User-Agent": "Mozilla/5.0 (compatible; AdBlocker/1.0)"}
-        for url in EASYLIST_MIRRORS:
+        for url in mirrors:
             try:
                 req = urllib.request.Request(url, headers=headers)
                 with urllib.request.urlopen(req, timeout=15) as response:
                     data = response.read()
-                with open(EASYLIST_FILE, "wb") as f:
+                with open(target, "wb") as f:
                     f.write(data)
-                logger.info(f"EasyList downloaded from {url}")
+                logger.info(f"{target} downloaded from {url}")
                 return True
             except Exception as e:
-                logger.warning(f"EasyList mirror failed ({url}): {e}")
+                logger.warning(f"Mirror failed ({url}): {e}")
         return False
+
+    def _download_easylist(self):
+        return self._download_list(EASYLIST_MIRRORS, EASYLIST_FILE)
 
     def load_easylist(self):
         if self._needs_refresh():
@@ -110,12 +154,28 @@ class AdBlockInterceptor(QWebEngineUrlRequestInterceptor):
                     logger.warning("EasyList unavailable — ad blocking will be limited.")
                     return
                 logger.warning("Using stale EasyList (all mirrors failed).")
+        # EasyPrivacy is a separate list covering trackers and analytics,
+        # which EasyList deliberately leaves alone.
+        if not os.path.exists(EASYPRIVACY_FILE):
+            self._download_list(EASYPRIVACY_MIRRORS, EASYPRIVACY_FILE)
+
         try:
             self.filters = FilterSet.from_file(EASYLIST_FILE)
-            logger.info(f"EasyList loaded: {len(self.filters):,} domain rules "
-                        f"({self.filters.skipped:,} non-domain rules ignored)")
+            base_rules = len(self.filters)
+
+            if os.path.exists(EASYPRIVACY_FILE):
+                privacy = FilterSet.from_file(EASYPRIVACY_FILE)
+                self.filters.domains |= privacy.domains
+                logger.info(f"EasyPrivacy loaded: {len(privacy):,} tracker rules")
+
+            # Element hiding — the half of the list previously discarded, and
+            # the reason blocked ads still left holes in the layout.
+            self.cosmetics = CosmeticFilterSet.from_file(EASYLIST_FILE)
+            logger.info(f"EasyList loaded: {base_rules:,} domain rules, "
+                        f"{len(self.cosmetics):,} cosmetic rules "
+                        f"({len(self.filters):,} blocked hosts total)")
         except Exception as e:
-            logger.error(f"Failed to parse EasyList: {e}")
+            logger.error(f"Failed to parse filter lists: {e}")
 
     def interceptRequest(self, info):
         if not self.enabled:
