@@ -1,4 +1,4 @@
-# 🌐 Blackline Browser
+<img width="843" height="132" alt="blackline_banner_blk" src="https://github.com/user-attachments/assets/8b7736c6-2c24-454b-9b0b-ea74f869d98c" />
 
 A power-user personal browser built on **PyQt6 + QtWebEngine**, with a signature dark-industrial UI, an animated boot sequence, private browsing, network *and* cosmetic ad filtering, HTTPS-only mode, an encrypted credential vault, a governed plugin system, and an integrated multi-threaded download manager.
 
@@ -12,7 +12,7 @@ Built as a research and media-tooling browser rather than a hardened daily drive
 
 ---
 
-<img width="1282" height="852" alt="webbrowser" src="https://github.com/user-attachments/assets/d5335cda-b782-4655-a138-e524f19e6ae9" />
+<img width="1282" height="852" alt="screenshot" src="https://github.com/user-attachments/assets/654facad-1759-4256-b653-b70bdd224661" />
 
 ---
 
